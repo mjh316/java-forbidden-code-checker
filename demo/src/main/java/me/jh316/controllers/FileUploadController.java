@@ -1,4 +1,4 @@
-package me.jh316;
+package me.jh316.controllers;
 
 import java.io.IOException;
 import java.util.stream.Collectors;

@@ -1,4 +1,4 @@
-package me.jh316;
+package me.jh316.controllers;
 
 import java.util.concurrent.atomic.AtomicLong;
 
