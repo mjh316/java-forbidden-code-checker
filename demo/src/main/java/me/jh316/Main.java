@@ -26,10 +26,17 @@ import com.github.javaparser.ast.stmt.TryStmt;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.utils.SourceRoot;
 
+import me.jh316.storage.StorageProperties;
+import me.jh316.storage.StorageService;
+
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 
 @SpringBootApplication
+@EnableConfigurationProperties(StorageProperties.class)
 public class Main {
     // A visitor class to visit methods and their variables
     // private static class MethodVisitor extends VoidVisitorAdapter<Void> {
@@ -349,5 +356,13 @@ public class Main {
         }
 
         SpringApplication.run(Main.class, args);
+    }
+
+    @Bean
+    CommandLineRunner init(StorageService storageService) {
+        return (args) -> {
+            storageService.deleteAll();
+            storageService.init();
+        };
     }
 }
