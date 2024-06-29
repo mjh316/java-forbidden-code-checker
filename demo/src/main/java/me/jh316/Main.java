@@ -1,5 +1,6 @@
 package me.jh316;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -76,8 +77,13 @@ public class Main {
                 "stream", "map", "filter", "forEach", "collect", "flatMap", "reduce", "distinct",
                 "sorted", "peek", "limit", "skip", "anyMatch", "allMatch", "noneMatch", "findFirst", "findAny"));
 
+        public static String forbiddenMessage = "";
+        public static boolean goodconstructor = true;
+        public static boolean goodmethod = true;
+
         @Override
         public void visit(ConstructorDeclaration cd, Void arg) {
+            goodconstructor = false;
             super.visit(cd, arg);
             if (cd.isAnnotationPresent("Test")) {
                 System.out.println("Method: " + cd.getName() + " is a test method, skipping...");
@@ -93,7 +99,14 @@ public class Main {
                                 + " METHOD: " + cd.getName());
                 System.out.println(containsForbiddenFeature(cd) + ANSI_RESET);
                 System.out.println();
+
+                forbiddenMessage += "FORBIDDEN FEATURE IN FILE: "
+                        + cd.findCompilationUnit().get().getStorage().get().getPath().getFileName()
+                        + " METHOD: " + cd.getName() + "\n";
+                forbiddenMessage += containsForbiddenFeature(cd) + "\n";
                 return;
+            } else {
+                goodconstructor = true;
             }
         }
 
@@ -292,6 +305,7 @@ public class Main {
 
         @Override
         public void visit(MethodDeclaration md, Void arg) {
+            goodmethod = false;
             super.visit(md, arg);
             if (md.isAnnotationPresent("Test")) {
                 System.out.println("Method: " + md.getName() + " is a test method, skipping...");
@@ -307,7 +321,13 @@ public class Main {
                                 + " METHOD: " + md.getName());
                 System.out.println(containsForbiddenFeature(md) + ANSI_RESET);
                 System.out.println();
+                forbiddenMessage += "FORBIDDEN FEATURE IN FILE: "
+                        + md.findCompilationUnit().get().getStorage().get().getPath().getFileName()
+                        + " METHOD: " + md.getName() + "\n";
+                forbiddenMessage += containsForbiddenFeature(md) + "\n";
                 return;
+            } else {
+                goodmethod = true;
             }
         }
 
@@ -330,10 +350,12 @@ public class Main {
 
     public static final String ANSI_GREEN = "\u001B[32m\t";
 
-    public static void main(String[] args) throws Exception {
-
+    public static String hasForbidden(String path) throws IOException {
+        MethodVisitor.forbiddenMessage = "";
+        MethodVisitor.goodconstructor = true;
+        MethodVisitor.goodmethod = true;
         // Specify the source code root directory
-        SourceRoot sourceRoot = new SourceRoot(Paths.get("P1"));
+        SourceRoot sourceRoot = new SourceRoot(Paths.get(path));
 
         // Parse all Java files in the directory
         sourceRoot.tryToParse();
@@ -346,6 +368,9 @@ public class Main {
                         ANSI_RED + "FORBIDDEN FEATURE IN FILE: " + cu.getStorage().get().getPath().getFileName()
                                 + " PACKAGE DECLARATION" + ANSI_RESET);
                 hasForbiddenFeature = true;
+                MethodVisitor.forbiddenMessage += "FORBIDDEN FEATURE IN FILE: "
+                        + cu.getStorage().get().getPath().getFileName() + " PACKAGE DECLARATION" + "\n";
+                MethodVisitor.forbiddenMessage += "Package declaration is forbidden\n";
                 continue;
             }
             cu.accept(new MethodVisitor(), null);
@@ -354,7 +379,14 @@ public class Main {
         if (!hasForbiddenFeature) {
             System.out.println(ANSI_GREEN + "No forbidden features found in methods!" + ANSI_RESET);
         }
+        if (MethodVisitor.goodconstructor && MethodVisitor.goodmethod && MethodVisitor.forbiddenMessage.isEmpty()) {
+            MethodVisitor.forbiddenMessage = "No forbidden features found in methods!";
+        }
+        return MethodVisitor.forbiddenMessage;
+    }
 
+    public static void main(String[] args) throws Exception {
+        // Specify the source code root directory
         SpringApplication.run(Main.class, args);
     }
 
