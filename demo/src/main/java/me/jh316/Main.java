@@ -26,6 +26,10 @@ import com.github.javaparser.ast.stmt.TryStmt;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
 import com.github.javaparser.utils.SourceRoot;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
 public class Main {
     // A visitor class to visit methods and their variables
     // private static class MethodVisitor extends VoidVisitorAdapter<Void> {
@@ -343,5 +347,7 @@ public class Main {
         if (!hasForbiddenFeature) {
             System.out.println(ANSI_GREEN + "No forbidden features found in methods!" + ANSI_RESET);
         }
+
+        SpringApplication.run(Main.class, args);
     }
 }
