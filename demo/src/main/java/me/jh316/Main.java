@@ -119,11 +119,19 @@ public class Main {
 
             if (md.findAll(ObjectCreationExpr.class).stream()
                     .anyMatch(oce -> oce.getType().asString()
-                            .matches("StringBuilder|StringBuffer|StringJoiner|StringTokenizer|LinkedHashMap"))) {
+                            .matches("StringBuilder|StringBuffer|StringJoiner|StringTokenizer"))) {
                 // System.out.println("Method: " + md.getName() + " contains forbidden object
                 // creation!");
                 ret.add("Method: " + md.getName() + " contains forbidden object creation of one of: " + "StringBuilder"
                         + ", " + "StringBuffer" + ", " + "StringJoiner" + ", " + "StringTokenizer");
+            }
+
+            // LinkedHashMap type checker
+            if (md.findAll(ObjectCreationExpr.class).stream()
+                    .anyMatch(oce -> oce.getType().asString().startsWith("LinkedHashMap"))) {
+                // System.out.println("Method: " + md.getName() + " contains LinkedHashMap
+                // object creation!");
+                ret.add("Method: " + md.getName() + " contains LinkedHashMap object creation!");
             }
 
             if (md.findAll(MethodCallExpr.class).stream()
@@ -150,7 +158,6 @@ public class Main {
             // Check for lambda expressions
             if (md.findAll(LambdaExpr.class).size() > 0) {
                 ret.add("Method: " + md.getName() + " contains lambda expressions!");
-                return ret;
             }
 
             // Check for method references
