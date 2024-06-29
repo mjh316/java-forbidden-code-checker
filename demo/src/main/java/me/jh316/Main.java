@@ -13,7 +13,9 @@ import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.LambdaExpr;
 import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.MethodReferenceExpr;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
 import com.github.javaparser.ast.stmt.BreakStmt;
 import com.github.javaparser.ast.stmt.ContinueStmt;
@@ -58,6 +60,10 @@ public class Main {
                 "Arrays.copyOfRange", "Arrays.sort", "toArray", "clone", "Collections.copy", "Collections.sort",
                 "System.console"));
 
+        private static final Set<String> STREAM_METHODS = new HashSet<>(Arrays.asList(
+                "stream", "map", "filter", "forEach", "collect", "flatMap", "reduce", "distinct",
+                "sorted", "peek", "limit", "skip", "anyMatch", "allMatch", "noneMatch", "findFirst", "findAny"));
+
         @Override
         public void visit(MethodDeclaration md, Void arg) {
             super.visit(md, arg);
@@ -67,7 +73,13 @@ public class Main {
             }
 
             if (!containsForbiddenFeature(md).isEmpty()) {
+                System.out.println();
+                System.out.println(
+                        "FORBIDDEN FEATURE IN FILE: "
+                                + md.findCompilationUnit().get().getStorage().get().getPath().getFileName()
+                                + " METHOD: " + md.getName());
                 System.out.println(containsForbiddenFeature(md));
+                System.out.println();
                 return;
             }
 
@@ -107,7 +119,7 @@ public class Main {
 
             if (md.findAll(ObjectCreationExpr.class).stream()
                     .anyMatch(oce -> oce.getType().asString()
-                            .matches("StringBuilder|StringBuffer|StringJoiner|StringTokenizer"))) {
+                            .matches("StringBuilder|StringBuffer|StringJoiner|StringTokenizer|LinkedHashMap"))) {
                 // System.out.println("Method: " + md.getName() + " contains forbidden object
                 // creation!");
                 ret.add("Method: " + md.getName() + " contains forbidden object creation of one of: " + "StringBuilder"
@@ -134,6 +146,26 @@ public class Main {
                     .anyMatch(vd -> vd.getTypeAsString().equals("var"))) {
                 // System.out.println("Method: " + md.getName() + " contains var keyword!");
                 ret.add("Method: " + md.getName() + " contains var keyword!");
+            }
+            // Check for lambda expressions
+            if (md.findAll(LambdaExpr.class).size() > 0) {
+                ret.add("Method: " + md.getName() + " contains lambda expressions!");
+                return ret;
+            }
+
+            // Check for method references
+            if (md.findAll(MethodReferenceExpr.class).size() > 0) {
+                // System.out.println("Method: " + md.getName() + " contains method
+                // references!");
+                ret.add("Method: " + md.getName() + " contains method references!");
+            }
+
+            // Check for stream API usage
+            if (md.findAll(MethodCallExpr.class).stream()
+                    .anyMatch(mce -> STREAM_METHODS.contains(mce.getNameAsString()))) {
+                // System.out.println("Method: " + md.getName() + " contains stream API
+                // usage!");
+                ret.add("Method: " + md.getName() + " contains stream API usage!");
             }
 
             // Check for Java 8 and Java 11 specific features
