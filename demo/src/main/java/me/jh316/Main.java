@@ -138,7 +138,7 @@ public class Main {
             // if (md.getAnnotations().stream().anyMatch(a ->
             // a.getNameAsString().equals("Override"))) {
             // System.out.println("Method: " + md.getName() + " is an overridden method!");
-            // return true;
+            // return tfue;
             // }
 
             // Check for var keyword
@@ -181,6 +181,10 @@ public class Main {
         }
     }
 
+    private static boolean containsForbiddenPackageDeclaration(CompilationUnit cu) {
+        return cu.getPackageDeclaration().isPresent();
+    }
+
     public static void main(String[] args) throws Exception {
 
         // Specify the source code root directory
@@ -191,6 +195,11 @@ public class Main {
 
         // For each parsed file, visit the methods and variables
         for (CompilationUnit cu : sourceRoot.getCompilationUnits()) {
+            if (containsForbiddenPackageDeclaration(cu)) {
+                System.out.println("FORBIDDEN FEATURE IN FILE: " + cu.getStorage().get().getPath().getFileName()
+                        + " PACKAGE DECLARATION");
+                continue;
+            }
             cu.accept(new MethodVisitor(), null);
         }
     }
